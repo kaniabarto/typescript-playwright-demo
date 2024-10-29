@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
 
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -23,6 +22,9 @@ const currentsConfig = {
 const isCI = ["staging", "review"].includes(
   process.env.TEST_ENV ?? "development"
 );
+
+/* This is the path to the JSON file where we want to store the session details. */
+export const STORAGE_STATE = "./auth/session.json";
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -59,9 +61,33 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "login",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/login.setup.ts",
     },
+    {
+      name: "teardown",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/global.teardown.ts",
+    },
+    {
+      name: "Logged In tests",
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
+      dependencies: ["login"],
+      teardown: "teardown",
+      testMatch: "**/*.spec.ts",
+      testIgnore: "**/register.spec.ts",
+    },
+    {
+      name: "Logged out tests",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/register.spec.ts",
+    },
+    
+    // {
+    //   name: 'chromium',
+    //   use: { ...devices['Desktop Chrome'] },
+    // },
 
     // {
     //   name: 'firefox',
